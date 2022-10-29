@@ -1,4 +1,5 @@
 
+#include "src/ColliderManager.cpp"
 #include"imgui.h"
 #include"imgui_impl_glfw.h"
 #include"imgui_impl_opengl3.h"
@@ -9,7 +10,6 @@
 
 const int objectsAmount = 2;
 bool run = false;
-
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -64,6 +64,22 @@ glm::vec3 direction_to_forward(glm::vec3 vector3, double yaw, double pitch)
 
 	return vector3;
 }
+glm::vec3 direction_to_right(glm::vec3 vector3, double yaw, double roll)
+{
+	vector3.y = cos(roll) * cos(yaw);
+	vector3.z = sin(roll) * cos(yaw);
+	vector3.x = sin(yaw);
+
+	return vector3;
+}
+glm::vec3 direction_to_up(glm::vec3& vector3, double roll, double pitch)
+{
+	vector3.z = cos(pitch) * cos(roll);
+	vector3.x = sin(pitch) * cos(roll);
+	vector3.y = sin(roll);
+
+	return vector3;
+}
 
 
 glm::quat QuatLookAt(
@@ -102,16 +118,6 @@ glm::vec3 UIvec3(bool selected)
 	return position;
 
 }
-
-//collision
-//__________
-bool colidedX = false;
-float camPosX;
-
-float camPosZ;
-bool colidedZ = false;
-//__________
-
 
 float rectangleVertices[] =
 {
@@ -652,6 +658,12 @@ int main()
 	}
 
 
+	MeshCollider meshColl1, meshColl2;
+	meshColl1.object_veritces = { glm::vec3( 0, 0, 0),glm::vec3( 5, 0, 0),glm::vec3( 0, 2, 0),glm::vec3( 0, 2, 3) };
+	meshColl2.object_veritces = { glm::vec3( 0, 3, 0),glm::vec3( 5, 3, 0),glm::vec3( 5, -1, 0),glm::vec3( 5, 2, 5) };
+
+	std::cout << ((ColliderManager::GJK(&meshColl1, &meshColl2)) ? "true" : "false");
+	
 
 	float cameraPosYCol;
 	float floorLev = 0;
@@ -743,23 +755,6 @@ int main()
 					cameraPosYCol = camera.Position.y;
 				}
 
-				if (colidedX)
-				{
-					camera.Position.x = camPosX;
-				}
-				else {
-
-					camPosX = camera.Position.x;
-				}
-
-				if (colidedZ)
-				{
-					camera.Position.z = camPosZ;
-				}
-				else {
-
-					camPosZ = camera.Position.z;
-				}
 			}
 		}
 
@@ -803,23 +798,6 @@ int main()
 
 
 			
-			if (colidedX)
-			{
-				camera.Position.x = camPosX;
-			}
-			else {
-
-				camPosX = camera.Position.x;
-			}
-
-			if (colidedZ)
-			{
-				camera.Position.z = camPosZ;
-			}
-			else {
-
-				camPosZ = camera.Position.z;
-			}
 		}
 
 		// Switch back to the default framebuffer
@@ -879,7 +857,7 @@ int main()
 			//look at fuction
 			//grid.Draw(shaderProgram, camera, glm::vec3(0.0f, 0.0f, 0.0f), QuatLookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(camera.Position.x, -camera.Position.y, camera.Position.z), -camera.Up), glm::vec3(10.5f, 1, 10));
 			//forward direction function
-			//grid.Draw(shaderProgram, camera, direction_to_forward(glm::vec3(), 0, 20) * glm::vec3(20), euler_to_quat(0, 20, 0), glm::vec3(5, 1, 5));
+			//grid.Draw(shaderProgram, camera, direction_to_forward(glm::vec3(0,2000,0), 0, 20) * glm::vec3(20), euler_to_quat(0, 20, 0), glm::vec3(5, 1, 5));
 			
 		}
 		if (run == true && enableskybox || FullCockpit && enableskybox) {

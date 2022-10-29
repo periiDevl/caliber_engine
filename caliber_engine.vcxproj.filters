@@ -137,6 +137,9 @@
     <ClInclude Include="src\VBO.h">
       <Filter>Header Files\src</Filter>
     </ClInclude>
+    <ClInclude Include="src\ColliderManager.cpp">
+      <Filter>Source Files\src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="pop_cat.png">
