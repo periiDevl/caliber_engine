@@ -87,6 +87,9 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\PhysicsManager.cpp">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imgui\imconfig.h">
@@ -137,8 +140,8 @@
     <ClInclude Include="src\VBO.h">
       <Filter>Header Files\src</Filter>
     </ClInclude>
-    <ClInclude Include="src\ColliderManager.cpp">
-      <Filter>Source Files\src</Filter>
+    <ClInclude Include="src\PhysicsManager.h">
+      <Filter>Header Files\src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

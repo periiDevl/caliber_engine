@@ -1,5 +1,3 @@
-
-#include "src/ColliderManager.cpp"
 #include"imgui.h"
 #include"imgui_impl_glfw.h"
 #include"imgui_impl_opengl3.h"
@@ -7,7 +5,7 @@
 #include<iostream>
 #include<fstream>
 #include<string>
-
+#include"src/PhysicsManager.cpp"
 const int objectsAmount = 2;
 bool run = false;
 
@@ -330,19 +328,24 @@ int main()
 
 	//camera stacking
 	//Camera camera2(width, height, glm::vec3(22.0f, 15.0, 0.0f));
-	
 
-	
+
 	
 	
 	
 	// Load in models
 
-	
+	Rigidbody sphere1RB = CreateSphereBody(glm::vec3(0,2, 0), 1, glm::vec3(0, 0, 0));
+	sphere1RB.Velocity = glm::vec3(0, -1, 0);
+	Rigidbody sphere2RB = CreateSphereBody(glm::vec3(0, 0, 0), 1, glm::vec3(0, 0, 0));
+	sphere2RB.Velocity = glm::vec3(0, 3, 0);
 	Model sceneObjects[objectsAmount] = { "models/crowI/scene.gltf", "models/grid/scene.gltf" };
-
-
-
+	Model sphere1("models/sphere/scene.gltf");
+	Model sphere2("models/sphere/scene.gltf");
+	
+	PhysicalWorld physics;
+	physics.AddObject(&sphere1RB);
+	physics.AddObject(&sphere2RB);
 	
 
 	Model grid("models/grid/scene.gltf");
@@ -358,7 +361,6 @@ int main()
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
 
 
 	// Variables to create periodic event for FPS displaying
@@ -467,10 +469,8 @@ int main()
 	if (highQualtiyShdows == 1) {
 		shadowMapWidth = 3000, shadowMapHeight = 3000;
 	}
-	else
-	{
+	else{
 		shadowMapWidth = 800, shadowMapHeight = 800;
-
 	}
 	
 	unsigned int shadowMap;
@@ -657,12 +657,13 @@ int main()
 		}
 	}
 
-
-	MeshCollider meshColl1, meshColl2;
-	meshColl1.object_veritces = { glm::vec3( 0, 0, 0),glm::vec3( 5, 0, 0),glm::vec3( 0, 2, 0),glm::vec3( 0, 2, 3) };
-	meshColl2.object_veritces = { glm::vec3( 0, 3, 0),glm::vec3( 5, 3, 0),glm::vec3( 5, -1, 0),glm::vec3( 5, 2, 5) };
-
-	std::cout << ((ColliderManager::GJK(&meshColl1, &meshColl2)) ? "true" : "false");
+/*
+	PhysicsManager meshColl1, meshColl2;
+	meshColl1.object_veritces = { glm::vec3(-2, 3,-5),glm::vec3(2, 3,-5),glm::vec3(2, 1.5,-5),glm::vec3(-2, 1.5,-5),
+								  glm::vec3(-2, 3, 5),glm::vec3(2, 3, 5),glm::vec3(2, 1.5, 5),glm::vec3(-2, 1.5, 5) };
+	meshColl2.object_veritces = { glm::vec3(-2, 2,-5),glm::vec3(2, 2,-5),glm::vec3(2, 0,-5),glm::vec3(-2, 0,-5),
+								  glm::vec3(-2, 2, 5),glm::vec3(2, 2, 5),glm::vec3(2, 0, 5),glm::vec3(-2, 0, 5) };
+								  */
 	
 
 	float cameraPosYCol;
@@ -745,16 +746,6 @@ int main()
 			// Use this if you have disabled VSync
 			if (vsync == 0 && !run) {
 				camera.Inputs(window, ctrlSpeed, normalSpeed);
-				if (camera.Position.y < floorLev)
-				{
-			
-					camera.Position.y = cameraPosYCol;
-				}
-				else
-				{
-					cameraPosYCol = camera.Position.y;
-				}
-
 			}
 		}
 
@@ -773,31 +764,18 @@ int main()
 		if (run == true || FullCockpit) {
 			if (renderShadows == 1) {
 				
-				sceneObjects[0].Draw(shadowMapProgram, camera, UIvec3(true), glm::quat(0, 0, 0, 0), glm::vec3(20, 20, 20));
-				sceneObjects[0].Draw(shadowMapProgram, camera, UIvec3(false), glm::quat(0, 0, 0, 0), glm::vec3(15, 15, 15));
+				//sceneObjects[0].Draw(shadowMapProgram, camera, UIvec3(true), glm::quat(0, 0, 0, 0), glm::vec3(20, 20, 20));
+				//sceneObjects[0].Draw(shadowMapProgram, camera, UIvec3(false), glm::quat(0, 0, 0, 0), glm::vec3(15, 15, 15));
 			}
 			
 		}
 	
 	
 		
-		
 
 		// Handles camera inputs (delete this if you have disabled VSync)
 		if (vsync == 1 && !run) {
 			camera.Inputs(window, ctrlSpeed, normalSpeed);
-			if (camera.Position.y < floorLev)
-			{
-
-				camera.Position.y = cameraPosYCol;
-			}
-			else
-			{
-				cameraPosYCol = camera.Position.y;
-			}
-
-
-			
 		}
 
 		// Switch back to the default framebuffer
@@ -849,8 +827,15 @@ int main()
 		//{
 			//sceneObjects[i].Draw(shaderProgram, camera, glm::vec3(0, 0, 0.0f), glm::quat(0, 0, 0, 0), glm::vec3(20, 20, 20));
 		//}
-		sceneObjects[0].Draw(shaderProgram, camera, UIvec3(true), glm::quat(0, 0, 0, 0), glm::vec3(20, 20, 20));
-		sceneObjects[0].Draw(shaderProgram, camera, UIvec3(false), glm::quat(0, 0, 0, 0), glm::vec3(15, 15, 15));
+		//sceneObjects[0].Draw(shaderProgram, camera, UIvec3(true), glm::quat(0, 0, 0, 0), glm::vec3(20, 20, 20));
+		//sceneObjects[0].Draw(shaderProgram, camera, UIvec3(false), glm::quat(0, 0, 0, 0), glm::vec3(15, 15, 15));
+		
+		physics.Step(timeDiff, window);
+		
+
+		sphere1.Draw(shaderProgram, camera, sphere1RB.Position, glm::quat(0, 0, 0, 0), glm::vec3(1, 1, 1));
+		sphere2.Draw(shaderProgram, camera, sphere2RB.Position, glm::quat(0, 0, 0, 0), glm::vec3(1, 1, 1));
+
 		if (!run) {
 			grid.Draw(shaderProgram, camera, glm::vec3(0.0f, 0.0f, 0.0f), euler_to_quat(0, 0, 0), glm::vec3(10.5f, 1, 10));
 
