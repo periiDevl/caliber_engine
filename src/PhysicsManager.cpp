@@ -16,10 +16,7 @@ struct Collider : Component {
 	glm::vec3 FindFurthestPoint(glm::vec3 position, glm::vec3 direction) { 
 		glm::vec3 maxPoint;
 		if (Radius != 0) {
-			std::cout << "position:" << glm::to_string(position) << " direction:" << glm::to_string(direction) << " radius:" << Radius << std::endl;
-			
 			maxPoint = ((position + Offset) + (direction * Radius));
-			std::cout << "max point:" << glm::to_string(maxPoint) << std::endl;
 			return maxPoint;
 		}
 		else {
@@ -54,6 +51,7 @@ struct Rigidbody : Component {
 	glm::vec3 Force;
 
 	bool IsTrigger;
+	bool IsStatic;
 	float Restitution;
 	Collider* Collider;
 };
@@ -129,9 +127,14 @@ class ColliderManager {
 public:
 	static std::pair<bool, simplex> GJK(const Rigidbody* colA, const Rigidbody* colB)
 		{
+			if (colA->Collider->Radius != 0 && colB->Collider->Radius != 0) {
+				simplex points;
+				points.push_front(glm::vec3(0, 0, 0));
+				return { glm::distance(colA->Position, colB->Position) <= colA->Collider->Radius + colB->Collider->Radius, points};
+			}
+
 			// first simplex point
 			glm::vec3 support = SupportMethod(colA, colB, glm::vec3(-1, 0, 0));
-			std::cout << "first point:" << glm::to_string(support) << std::endl;
 			simplex points;
 			points.push_front(support);
 
@@ -264,13 +267,11 @@ public:
 				glm::vec3 pointB = colliderB->Collider->FindFurthestPoint(colliderB->Position, glm::normalize(-(colliderB->Position - colliderA->Position)));
 				sphereVsphere.Normal = -glm::normalize(pointA - pointB);
 				sphereVsphere.Depth = glm::distance(pointA, pointB);
-				std::cout << std::endl << "A:" << glm::to_string(colliderA->Collider->FindFurthestPoint(colliderA->Position, glm::normalize(sphereVsphere.Normal))) 
-						<< "B:" << glm::to_string(colliderB->Collider->FindFurthestPoint(colliderB->Position, glm::normalize(-sphereVsphere.Normal))) << std::endl;
+				
 				sphereVsphere.objA = (Rigidbody*)colliderA;
 				sphereVsphere.objB = (Rigidbody*)colliderB;
 				
 				return sphereVsphere;
-
 			}
 
 			std::vector<glm::vec3> polytope(simplex.begin(), simplex.end());
@@ -287,20 +288,15 @@ public:
 			float minDistance = FLT_MAX;
 
 			while (minDistance == FLT_MAX) {
-				std::cout << "line 1" << std::endl;
 				minNormal = glm::vec3(normals[minFace].x, normals[minFace].y, normals[minFace].z);
 				minDistance = normals[minFace].w;
-				std::cout << "line 1.5:" << minDistance << std::endl;
 
 				glm::vec3 support = SupportMethod(colliderA, colliderB, glm::normalize(minNormal));
-				std::cout << "line 2:" << glm::to_string(support) << std::endl;
 				float sDistance = glm::dot(minNormal, support);
-				std::cout << "line 2.5:" << sDistance << std::endl;
 				if (abs(sDistance - minDistance) > 0.001f) {
 					minDistance = FLT_MAX;
 
 					std::vector<std::pair<size_t, size_t>> uniqueEdges;
-					std::cout << "line 3" << std::endl;
 					for (size_t i = 0; i < normals.size(); i++) {
 						if (IsSameDirection(normals[i], support)) {
 							size_t f = i * 3;
@@ -318,14 +314,12 @@ public:
 							i--;
 						}
 					}
-					std::cout << "line 4" << std::endl;
 					std::vector<size_t> newFaces;
 					for (auto [edgeIndex1, edgeIndex2] : uniqueEdges) {
 						newFaces.push_back(edgeIndex1);
 						newFaces.push_back(edgeIndex2);
 						newFaces.push_back(polytope.size());
 					}
-					std::cout << "line 5" << std::endl;
 					polytope.push_back(support);
 
 					auto [newNormals, newMinFace] = GetFaceNormals(polytope, newFaces);
@@ -336,7 +330,6 @@ public:
 							minFace = i;
 						}
 					}
-					std::cout << "line 6" << std::endl;
 					if (newNormals[newMinFace].w < oldMinDistance) {
 						minFace = newMinFace + normals.size();
 					}
@@ -344,13 +337,11 @@ public:
 					faces.insert(faces.end(), newFaces.begin(), newFaces.end());
 					normals.insert(normals.end(), newNormals.begin(), newNormals.end());
 				}
-				std::cout << "line 7" << std::endl;
 			}
-			std::cout << "line 8" << std::endl;
 			CollisionPoints points;
 
 			points.Normal = minNormal;
-			points.Depth = minDistance + 0.001f;
+			points.Depth = minDistance + 0.0001f;
 			points.objA = (Rigidbody*)colliderA;
 			points.objB = (Rigidbody*)colliderB;
 			return points;
@@ -426,7 +417,7 @@ class PhysicalWorld {
 private:
 	std::list<Rigidbody*> Objects;
 	std::list<Solver*> Solvers;
-	glm::vec3 Gravity = glm::vec3(0, -5.981f, 0);
+	glm::vec3 Gravity = glm::vec3(0, -0.05981f, 0);
 
 public:
 	void AddObject	 (Rigidbody* object) {
@@ -445,11 +436,19 @@ public:
 	void Step(float dt, GLFWwindow* window) {
 		if (glfwGetKey(window, GLFW_KEY_P)) {
 			for (Rigidbody* obj : Objects) {
+
+
 				glm::vec3 gravityF = Gravity * obj->Mass * dt;
 				obj->Force += gravityF;
 				glm::vec3 forceAdded = obj->Force / obj->Mass;
 				obj->Velocity += forceAdded;
-				obj->Position += obj->Velocity * dt;
+				
+				glm::vec3 pos = obj->Position;
+
+				if (!obj->IsStatic)
+					pos += obj->Velocity * dt;
+				
+				obj->Position = pos;
 				obj->Force = glm::vec3(0, 0, 0);
 			}
 			ResolveCollisions(dt, window);
@@ -472,10 +471,9 @@ public:
 					continue;
 				}
 				auto [value_, simplex_] = ColliderManager::GJK(a, b);
-				if (glfwGetKey(window, GLFW_KEY_C)) {
-					std::cout << "Spheres are colliding:" << value_ << std::endl;
-				}
+
 				if (value_) {
+					std::cout << "COLLIDING:" << dt << std::endl;
 					CollisionPoints points = ColliderManager::EPA(simplex_, a, b);
 					
 					collisions.emplace_back(points);
@@ -484,13 +482,34 @@ public:
 		}
 
 		for (CollisionPoints collision : collisions) {
-			std::cout << "RESOLVE COLLISION: depth:" << collision.Depth << std::endl;
-			collision.objA->Position += collision.Depth * collision.Normal;
-			collision.objB->Position -= collision.Depth * collision.Normal;
+			if (!collision.objA->IsStatic && !collision.objB->IsStatic) {
+				//std::cout << "OBJECT A&B:" << "Depth:" << collision.Depth << "  Normal:" << glm::to_string(collision.Normal) << std::endl;
+
+				collision.objA->Position += collision.Depth * collision.Normal * 0.5f;
+				collision.objB->Position -= collision.Depth * collision.Normal * 0.5f;
+			}
+			if (!collision.objA->IsStatic && collision.objB->IsStatic) {
+				//std::cout << "OBJECT A:" << "Depth:" << collision.Depth << "  Normal:" << glm::to_string(collision.Normal) << std::endl;
+				collision.objA->Position += collision.Depth * collision.Normal * 1.0f;
+
+			}
+			if (collision.objA->IsStatic && !collision.objB->IsStatic) {
+				//std::cout << "OBJECT B:" << "Depth:" << collision.Depth << "  Normal:" << glm::to_string(collision.Normal) << std::endl;
+				collision.objB->Position -= collision.Depth * collision.Normal * 1.0f;
+			}
 		}
 		for (CollisionPoints collision : collisions) {
-			collision.objA->Velocity += collision.Depth * collision.Normal;
-			collision.objB->Velocity -= collision.Depth * collision.Normal;
+			if (!collision.objA->IsStatic && !collision.objB->IsStatic) {
+				
+			}
+			if (!collision.objA->IsStatic && collision.objB->IsStatic) {
+				collision.objA->Force += collision.Depth * collision.Normal * 200.0f;
+			}
+			if (collision.objA->IsStatic && !collision.objB->IsStatic) {
+				collision.objB->Force -= collision.Depth * collision.Normal * 200.0f;
+			}
+			collision.objA->Force += collision.Depth * collision.Normal * 200.0f;
+			collision.objB->Force -= collision.Depth * collision.Normal * 200.0f;
 		}
 	}
 };

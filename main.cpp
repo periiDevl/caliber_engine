@@ -50,9 +50,7 @@ glm::quat euler_to_quat(double roll, double pitch, double yaw)
 	q.z = cr * cp * sy - sr * sp * cy;
 
 	return q;
-
 }
-
 
 glm::vec3 direction_to_forward(glm::vec3 vector3, double yaw, double pitch)
 {
@@ -332,16 +330,17 @@ int main()
 
 	
 	
-	
 	// Load in models
-
-	Rigidbody sphere1RB = CreateSphereBody(glm::vec3(0,2, 0), 1, glm::vec3(0, 0, 0));
-	sphere1RB.Velocity = glm::vec3(0, -1, 0);
-	Rigidbody sphere2RB = CreateSphereBody(glm::vec3(0, 0, 0), 1, glm::vec3(0, 0, 0));
-	sphere2RB.Velocity = glm::vec3(0, 3, 0);
-	Model sceneObjects[objectsAmount] = { "models/crowI/scene.gltf", "models/grid/scene.gltf" };
 	Model sphere1("models/sphere/scene.gltf");
+	Rigidbody sphere1RB = CreateSphereBody(glm::vec3(-5, 4, 0), .9f, glm::vec3(0, 0, 0));
+	sphere1RB.Velocity = glm::vec3(4, 0, 0);
+
 	Model sphere2("models/sphere/scene.gltf");
+	Rigidbody sphere2RB = CreateSphereBody(glm::vec3(5, 4, 0), .9f, glm::vec3(0, 0, 0));
+	sphere2RB.Velocity = glm::vec3(0, 0, 0);
+	sphere2RB.IsStatic = true;
+	
+	Model sceneObjects[objectsAmount] = { "models/crowI/scene.gltf", "models/grid/scene.gltf" };
 	
 	PhysicalWorld physics;
 	physics.AddObject(&sphere1RB);
@@ -499,13 +498,9 @@ int main()
 	glm::mat4 orthgonalProjectionHigh = glm::ortho(-70.0f, 70.0f, -70.0f, 70.0f, 1.0f, farPlane);
 	//you can change how far shadows go!!! from 10 to 70 and more
 	glm::mat4 perspectiveProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, farPlane);
-	if (HighLightView == 0) {
-		orthgonalProjection = orthgonalProjectionLow;
-
-	}
-	else if (HighLightView == 1) {
-		orthgonalProjection = orthgonalProjectionHigh;
-	}
+	
+	orthgonalProjection = HighLightView == 0 ? orthgonalProjectionLow : orthgonalProjectionHigh;
+	
 	//direc lights
 	glm::mat4 lightView = glm::lookAt(140.0f * lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 lightProjection = orthgonalProjection * lightView;
@@ -571,20 +566,11 @@ int main()
 	if (HighLightView == 0) {
 		lightVLow = false;
 	}
-
-	else
-	{
+	else{
 		lightVLow = true;
 	}
 
-	bool hqs = false;
-	if (highQualtiyShdows == 0) {
-		hqs = false;
-	}
-	else
-	{
-		hqs = true;
-	}
+	bool hqs = highQualtiyShdows == 0 ? false : true;
 
 	// Create VAO, VBO, and EBO for the skybox
 	unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
@@ -601,7 +587,6 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
 
 	// All the faces of the cubemap (make sure they are in this exact order)
 	std::string facesCubemap[6] =
@@ -831,7 +816,6 @@ int main()
 		//sceneObjects[0].Draw(shaderProgram, camera, UIvec3(false), glm::quat(0, 0, 0, 0), glm::vec3(15, 15, 15));
 		
 		physics.Step(timeDiff, window);
-		
 
 		sphere1.Draw(shaderProgram, camera, sphere1RB.Position, glm::quat(0, 0, 0, 0), glm::vec3(1, 1, 1));
 		sphere2.Draw(shaderProgram, camera, sphere2RB.Position, glm::quat(0, 0, 0, 0), glm::vec3(1, 1, 1));
