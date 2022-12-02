@@ -333,12 +333,11 @@ int main()
 	// Load in models
 	Model sphere1("models/sphere/scene.gltf");
 	Rigidbody sphere1RB = CreateSphereBody(glm::vec3(-5, 4, 0), .9f, glm::vec3(0, 0, 0));
-	sphere1RB.Velocity = glm::vec3(4, 0, 0);
+	sphere1RB.Velocity = glm::vec3(3, 0, 0);
 
 	Model sphere2("models/sphere/scene.gltf");
 	Rigidbody sphere2RB = CreateSphereBody(glm::vec3(5, 4, 0), .9f, glm::vec3(0, 0, 0));
-	sphere2RB.Velocity = glm::vec3(0, 0, 0);
-	sphere2RB.IsStatic = true;
+	sphere2RB.Velocity = glm::vec3(-2, 0, 0);
 	
 	Model sceneObjects[objectsAmount] = { "models/crowI/scene.gltf", "models/grid/scene.gltf" };
 	
@@ -364,6 +363,7 @@ int main()
 
 	// Variables to create periodic event for FPS displaying
 	double prevTime = 0.0;
+	double physPrevTime = 0.0;
 	double crntTime = 0.0;
 	double timeDiff;
 	// Keeps track of the Blur_amount of frames in timeDiff
@@ -707,8 +707,18 @@ int main()
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
+		if (!glfwGetKey(window, GLFW_KEY_Q))
+			physPrevTime = crntTime;
+
+		if (crntTime - physPrevTime >= 1.0 / 45.0 && glfwGetKey(window, GLFW_KEY_Q)) {
+			physics.Step(crntTime - physPrevTime, window);
+			physPrevTime = crntTime;
+		}
 		if (timeDiff >= 1.0 / 30.0)
 		{
+			
+
 			// Creates new title
 			std::string FPS = std::to_string((1.0 / timeDiff) * counter);
 			std::string ms = std::to_string((timeDiff / counter) * 1000);
@@ -815,7 +825,7 @@ int main()
 		//sceneObjects[0].Draw(shaderProgram, camera, UIvec3(true), glm::quat(0, 0, 0, 0), glm::vec3(20, 20, 20));
 		//sceneObjects[0].Draw(shaderProgram, camera, UIvec3(false), glm::quat(0, 0, 0, 0), glm::vec3(15, 15, 15));
 		
-		physics.Step(timeDiff, window);
+		
 
 		sphere1.Draw(shaderProgram, camera, sphere1RB.Position, glm::quat(0, 0, 0, 0), glm::vec3(1, 1, 1));
 		sphere2.Draw(shaderProgram, camera, sphere2RB.Position, glm::quat(0, 0, 0, 0), glm::vec3(1, 1, 1));

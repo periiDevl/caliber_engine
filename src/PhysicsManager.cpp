@@ -434,26 +434,23 @@ public:
 		Solvers.remove(solver);
 	}
 	void Step(float dt, GLFWwindow* window) {
-		if (glfwGetKey(window, GLFW_KEY_P)) {
-			for (Rigidbody* obj : Objects) {
-
-
-				glm::vec3 gravityF = Gravity * obj->Mass * dt;
-				obj->Force += gravityF;
-				glm::vec3 forceAdded = obj->Force / obj->Mass;
-				obj->Velocity += forceAdded;
+		for (Rigidbody* obj : Objects) {
+			glm::vec3 gravityF = Gravity * obj->Mass * dt;
+			obj->Force += gravityF;
+			glm::vec3 forceAdded = obj->Force / obj->Mass;
+			obj->Velocity += forceAdded;
 				
-				glm::vec3 pos = obj->Position;
+			glm::vec3 pos = obj->Position;
 
-				if (!obj->IsStatic)
-					pos += obj->Velocity * dt;
-				
-				obj->Position = pos;
-				obj->Force = glm::vec3(0, 0, 0);
-			}
-			ResolveCollisions(dt, window);
+			if (!obj->IsStatic)
+				pos += obj->Velocity * dt;
+			
+			obj->Position = pos;
+			obj->Force = glm::vec3(0, 0, 0);
 		}
+		ResolveCollisions(dt, window);
 	}
+	
 
 	void ResolveCollisions(float dt, GLFWwindow* window)
 	{
