@@ -417,7 +417,7 @@ class PhysicalWorld {
 private:
 	std::list<Rigidbody*> Objects;
 	std::list<Solver*> Solvers;
-	glm::vec3 Gravity = glm::vec3(0, -0.05981f, 0);
+	glm::vec3 Gravity = glm::vec3(0, -1.35981f, 0);
 
 public:
 	void AddObject	 (Rigidbody* object) {
@@ -470,7 +470,6 @@ public:
 				auto [value_, simplex_] = ColliderManager::GJK(a, b);
 
 				if (value_) {
-					std::cout << "COLLIDING:" << dt << std::endl;
 					CollisionPoints points = ColliderManager::EPA(simplex_, a, b);
 					
 					collisions.emplace_back(points);
@@ -478,35 +477,25 @@ public:
 			}
 		}
 
-		for (CollisionPoints collision : collisions) {
-			if (!collision.objA->IsStatic && !collision.objB->IsStatic) {
-				//std::cout << "OBJECT A&B:" << "Depth:" << collision.Depth << "  Normal:" << glm::to_string(collision.Normal) << std::endl;
+		
 
-				collision.objA->Position += collision.Depth * collision.Normal * 0.5f;
-				collision.objB->Position -= collision.Depth * collision.Normal * 0.5f;
-			}
-			if (!collision.objA->IsStatic && collision.objB->IsStatic) {
-				//std::cout << "OBJECT A:" << "Depth:" << collision.Depth << "  Normal:" << glm::to_string(collision.Normal) << std::endl;
-				collision.objA->Position += collision.Depth * collision.Normal * 1.0f;
-
-			}
-			if (collision.objA->IsStatic && !collision.objB->IsStatic) {
-				//std::cout << "OBJECT B:" << "Depth:" << collision.Depth << "  Normal:" << glm::to_string(collision.Normal) << std::endl;
-				collision.objB->Position -= collision.Depth * collision.Normal * 1.0f;
-			}
-		}
 		for (CollisionPoints collision : collisions) {
-			if (!collision.objA->IsStatic && !collision.objB->IsStatic) {
-				
-			}
-			if (!collision.objA->IsStatic && collision.objB->IsStatic) {
-				collision.objA->Force += collision.Depth * collision.Normal * 200.0f;
-			}
-			if (collision.objA->IsStatic && !collision.objB->IsStatic) {
-				collision.objB->Force -= collision.Depth * collision.Normal * 200.0f;
-			}
-			collision.objA->Force += collision.Depth * collision.Normal * 200.0f;
-			collision.objB->Force -= collision.Depth * collision.Normal * 200.0f;
+			glm::vec3 relativeVelocity = collision.objB->Velocity - collision.objA->Velocity;
+
+			float e = std::min(collision.objA->Restitution, collision.objB->Restitution);
+
+			float j = glm::dot(relativeVelocity, collision.Normal);
+
+			std::cout << "energy jouls:" << j << std::endl;
+
+			collision.objA->Position += collision.Normal * collision.Depth / 2.0f;
+			collision.objB->Position -= collision.Normal * collision.Depth / 2.0f;
+
+			std::cout << "obj a velocity:" << glm::to_string(collision.objA->Velocity) << std::endl;
+			std::cout << "obj b velocity:" << glm::to_string(collision.objB->Velocity) << std::endl;
+
+			collision.objA->Velocity += j * collision.Normal;
+			collision.objB->Velocity += -j * collision.Normal;
 		}
 	}
 };

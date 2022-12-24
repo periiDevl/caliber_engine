@@ -333,12 +333,16 @@ int main()
 	// Load in models
 	Model sphere1("models/sphere/scene.gltf");
 	Rigidbody sphere1RB = CreateSphereBody(glm::vec3(-5, 4, 0), .9f, glm::vec3(0, 0, 0));
-	sphere1RB.Velocity = glm::vec3(3, 0, 0);
+	sphere1RB.Velocity = glm::vec3(10, 0, 0);
+	sphere1RB.Mass = 10.0f;
+	sphere1RB.Restitution = 0.5f;
 
 	Model sphere2("models/sphere/scene.gltf");
 	Rigidbody sphere2RB = CreateSphereBody(glm::vec3(5, 4, 0), .9f, glm::vec3(0, 0, 0));
-	sphere2RB.Velocity = glm::vec3(-2, 0, 0);
-	
+	sphere2RB.Velocity = glm::vec3(-2.6f, 0, 0);
+	sphere2RB.Mass = 10.0f;
+	sphere2RB.Restitution = 0.5f;
+
 	Model sceneObjects[objectsAmount] = { "models/crowI/scene.gltf", "models/grid/scene.gltf" };
 	
 	PhysicalWorld physics;
@@ -1006,7 +1010,6 @@ int main()
 							ImGui::InputFloat("Fog near value", &FogNear, 0.3f, 1, "%.3f", 0);
 							glUniform1f(glGetUniformLocation(shaderProgram.ID, "near"), FogNear);
 							glUniform1f(glGetUniformLocation(shaderProgram.ID, "far"), viewFarPlane);
-
 						}
 						ImGui::EndTabBar();
 					}
