@@ -713,7 +713,9 @@ int main()
 		ImGui::NewFrame();
 
 		if (!glfwGetKey(window, GLFW_KEY_Q))
+		{
 			physPrevTime = crntTime;
+		}
 
 		if (crntTime - physPrevTime >= 1.0 / 45.0 && glfwGetKey(window, GLFW_KEY_Q)) {
 			physics.Step(crntTime - physPrevTime, window);
