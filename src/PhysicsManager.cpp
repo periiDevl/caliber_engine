@@ -74,6 +74,21 @@ inline Rigidbody CreateSphereBody(glm::vec3 position, float radius, glm::vec3 of
 	return body;
 }
 
+inline Rigidbody CreateMeshBody(glm::vec3 position, std::vector<glm::vec3> vertices, glm::vec3 offset) {
+	Rigidbody body;
+	body.Collider = new Collider();
+	body.Collider->IsActive = true;
+	body.Collider->object_veritces = vertices;
+	body.Collider->Offset = offset;
+
+	body.IsActive = true;
+	body.Mass = 10;
+	body.Position = position;
+	body.Velocity = glm::vec3(0, 0, 0);
+	return body;
+}
+
+
 // Takes one point from the first collider and take a second point from the other collider to try to create a simplex
 inline glm::vec3 SupportMethod(const Rigidbody* colA, const Rigidbody* colB, glm::vec3 direction) {
 	return colA->Collider->FindFurthestPoint(colA->Position, direction) - colB->Collider->FindFurthestPoint(colB->Position, -direction);
@@ -417,7 +432,7 @@ class PhysicalWorld {
 private:
 	std::list<Rigidbody*> Objects;
 	std::list<Solver*> Solvers;
-	glm::vec3 Gravity = glm::vec3(0, -1.35981f, 0);
+	glm::vec3 Gravity = glm::vec3(0, 0, 0);
 
 public:
 	void AddObject(Rigidbody* object) {
@@ -482,20 +497,51 @@ public:
 		for (CollisionPoints collision : collisions) {
 			glm::vec3 relativeVelocity = collision.objB->Velocity - collision.objA->Velocity;
 
+
+			if (collision.objA->IsStatic && collision.objB->IsStatic)
+				continue;
 			float e = std::min(collision.objA->Restitution, collision.objB->Restitution);
 
-			float j = glm::dot(relativeVelocity, collision.Normal);
+			glm::vec3 n = collision.Normal;
 
-			std::cout << "energy jouls:" << j << std::endl;
+			float m1 = collision.objA->Mass;
+			float m2 = collision.objB->Mass;
 
-			collision.objA->Position += collision.Normal * collision.Depth / 2.0f;
-			collision.objB->Position -= collision.Normal * collision.Depth / 2.0f;
 
-			std::cout << "obj a velocity:" << glm::to_string(collision.objA->Velocity) << std::endl;
-			std::cout << "obj b velocity:" << glm::to_string(collision.objB->Velocity) << std::endl;
+			glm::vec3 v1 = collision.objA->Velocity;
+			glm::vec3 v2 = collision.objB->Velocity;
 
-			collision.objA->Velocity += j * collision.Normal;
-			collision.objB->Velocity += -j * collision.Normal;
+			glm::vec3 newV1 = v1 - (1 + e) * (n * v1 + n * v2) / (1 / m1 + 1 / m2);
+			glm::vec3 newV2 = v2 - (1 + e) * (n * v1 + n * v2) / (1 / m1 + 1 / m2);
+
+			std::cout << "Restituation" + std::to_string(e) << std::endl;
+			std::cout << "Normal:" + glm::to_string(n) << std::endl;
+			std::cout << "Mass A :" + std::to_string(m1) << "Mass B :" + std::to_string(m2) << std::endl;
+			std::cout << "Velocity A :" + glm::to_string(v1) << "Velocity B :" + glm::to_string(v2) << std::endl;
+			std::cout << "Result Velocity A :" + glm::to_string(newV1) << "Result Velocity B :" + glm::to_string(newV2) << std::endl;
+
+			if (!collision.objA->IsStatic && !collision.objB->IsStatic) {
+				collision.objA->Position += collision.Normal * collision.Depth / 2.0f;
+				collision.objB->Position -= collision.Normal * collision.Depth / 2.0f;
+
+				collision.objA->Velocity = newV1;
+				collision.objB->Velocity = newV2;
+			}
+
+			if (!collision.objA->IsStatic && collision.objB->IsStatic) {
+
+				collision.objA->Position += collision.Normal * collision.Depth;
+
+				collision.objA->Velocity = newV1;
+			}
+
+			if (collision.objA->IsStatic && !collision.objB->IsStatic) {
+
+				collision.objB->Position -= collision.Normal * collision.Depth;
+
+				collision.objB->Velocity = newV2;
+			}
+			
 		}
 	}
 };

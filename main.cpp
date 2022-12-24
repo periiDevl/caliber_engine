@@ -334,14 +334,14 @@ int main()
 	Model sphere1("models/sphere/scene.gltf");
 	Rigidbody sphere1RB = CreateSphereBody(glm::vec3(-5, 4, 0), .9f, glm::vec3(0, 0, 0));
 	sphere1RB.Velocity = glm::vec3(10, 0, 0);
-	sphere1RB.Mass = 10.0f;
-	sphere1RB.Restitution = 0.5f;
+	sphere1RB.Mass = 1.5f;
+	sphere1RB.Restitution = 1;
 
 	Model sphere2("models/sphere/scene.gltf");
 	Rigidbody sphere2RB = CreateSphereBody(glm::vec3(5, 4, 0), .9f, glm::vec3(0, 0, 0));
-	sphere2RB.Velocity = glm::vec3(-2.6f, 0, 0);
-	sphere2RB.Mass = 10.0f;
-	sphere2RB.Restitution = 0.5f;
+	sphere2RB.IsStatic = true;
+	sphere2RB.Mass = 1.1f;
+	sphere2RB.Restitution = 1;
 
 	Model sceneObjects[objectsAmount] = { "models/crowI/scene.gltf", "models/grid/scene.gltf" };
 	
